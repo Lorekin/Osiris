@@ -21,14 +21,14 @@ Config::Config(const char* name) noexcept
     std::transform(std::filesystem::directory_iterator{ path },
                    std::filesystem::directory_iterator{ },
                    std::back_inserter(configs),
-                   [](const auto& entry) { return entry.path().filename().string(); });
+                   [](const auto& entry) { return std::string{ (const char*)entry.path().filename().u8string().c_str() }; });
 }
 
 void Config::load(size_t id) noexcept
 {
     Json::Value json;
 
-    if (std::ifstream in{ path / configs[id] }; in.good())
+    if (std::ifstream in{ path / (const char8_t*)configs[id].c_str() }; in.good())
         in >> json;
     else
         return;
@@ -858,7 +858,7 @@ void Config::load(size_t id) noexcept
         if (miscJson.isMember("Disable model occlusion")) misc.disableModelOcclusion = miscJson["Disable model occlusion"].asBool();
         if (miscJson.isMember("Aspect Ratio")) misc.aspectratio = miscJson["Aspect Ratio"].asFloat();
         if (miscJson.isMember("Kill message")) misc.killMessage = miscJson["Kill message"].asBool();
-        if (miscJson.isMember("Kill message string")) strcpy_s(misc.killMessageString, sizeof(misc.killMessageString), miscJson["Kill message string"].asCString());
+        if (miscJson.isMember("Kill message string")) misc.killMessageString = miscJson["Kill message string"].asString();
         if (miscJson.isMember("Name stealer"))  misc.nameStealer = miscJson["Name stealer"].asBool();
         if (miscJson.isMember("Disable HUD blur"))  misc.disablePanoramablur = miscJson["Disable HUD blur"].asBool();
         if (miscJson.isMember("Vote text")) strcpy_s(misc.voteText, sizeof(misc.voteText), miscJson["Vote text"].asCString());
@@ -1649,7 +1649,7 @@ void Config::save(size_t id) const noexcept
         std::filesystem::create_directory(path);
     }
 
-    if (std::ofstream out{ path / configs[id] }; out.good())
+    if (std::ofstream out{ path / (const char8_t*)configs[id].c_str() }; out.good())
         out << json;
 }
 
@@ -1661,13 +1661,13 @@ void Config::add(const char* name) noexcept
 
 void Config::remove(size_t id) noexcept
 {
-    std::filesystem::remove(path / configs[id]);
+    std::filesystem::remove(path / (const char8_t*)configs[id].c_str());
     configs.erase(configs.cbegin() + id);
 }
 
 void Config::rename(size_t item, const char* newName) noexcept
 {
-    std::filesystem::rename(path / configs[item], path / newName);
+    std::filesystem::rename(path / (const char8_t*)configs[item].c_str(), path / (const char8_t*)newName);
     configs[item] = newName;
 }
 
